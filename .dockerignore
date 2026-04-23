@@ -1,0 +1,14 @@
+bin
+obj
+.git
+.gitignore
+.vs
+*.user
+*.suo
+*.sln
+*.md
+Dockerfile
+docker-compose*
+.env
+.vscode
+opencode.json
