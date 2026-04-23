@@ -1,5 +1,5 @@
 # https://hub.docker.com/_/microsoft/dotnet
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy project files and restore dependencies
@@ -11,7 +11,7 @@ COPY . ./
 RUN dotnet publish bookstore.csproj -c Release -o /app/publish --no-restore
 
 # Runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
 # Install SQL Server tools and fonts for Azure SQL connectivity

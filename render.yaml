@@ -1,8 +1,10 @@
 services:
   - type: web
     name: bookstore
-    dockerfilePath: Dockerfile
+    env: dotnet
     region: oregon
+    buildCommand: dotnet publish -c Release -o publish
+    startCommand: dotnet publish/bookstore.dll
     plan: free
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
