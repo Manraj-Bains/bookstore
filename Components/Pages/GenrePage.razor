@@ -1,0 +1,67 @@
+@page "/genre/{Genre}"
+@rendermode InteractiveServer
+@inject IDbContextFactory<BookstoreDb> DbFactory
+
+<PageTitle>Books in @displayGenre - Bookstore</PageTitle>
+
+<div class="container py-4">
+    <h1 class="mb-4">Books in @displayGenre</h1>
+
+    @if (books is null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3 text-muted">Loading books...</p>
+        </div>
+    }
+    else if (books.Count == 0)
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>No books found in this genre.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var book in books)
+            {
+                <div class="col-md-6 col-xl-4">
+                    <BookCard Book="book" />
+                </div>
+            }
+        </div>
+    }
+
+    <div class="mt-4 pt-4 border-top">
+        <a href="/" class="text-decoration-none">
+            <i class="bi bi-arrow-left me-1"></i>Back to Home
+        </a>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Genre { get; set; } = string.Empty;
+
+    private List<Book>? books;
+    private string displayGenre = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var decodedGenre = Uri.UnescapeDataString(Genre ?? string.Empty).Trim();
+        displayGenre = string.IsNullOrWhiteSpace(decodedGenre) ? "Unknown" : decodedGenre;
+
+        using var context = await DbFactory.CreateDbContextAsync();
+
+        var normalized = decodedGenre.ToLower();
+        books = await context.Books
+            .AsNoTracking()
+            .Where(b => b.Genre != null && b.Genre.ToLower() == normalized)
+            .ToListAsync();
+
+        if (books.Count > 0 && !string.IsNullOrWhiteSpace(books[0].Genre))
+        {
+            displayGenre = books[0].Genre!;
+        }
+    }
+}

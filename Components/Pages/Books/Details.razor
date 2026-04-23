@@ -1,8 +1,7 @@
 @page "/books/{id:int}"
 @rendermode InteractiveServer
 @inject IDbContextFactory<BookstoreDb> DbFactory
-@inject CartService cartService
-@inject OrderState OrderState
+@inject CartService CartService
 
 <PageTitle>@(book?.Title ?? "Book Details") - Bookstore</PageTitle>
 
@@ -34,7 +33,17 @@
 
             <div class="col-md-8">
                 <div class="mb-3">
-                    <span class="badge bg-secondary">@book.Genre</span>
+                    @if (!string.IsNullOrWhiteSpace(book.Genre))
+                    {
+                        <a class="badge bg-secondary text-decoration-none"
+                           href="@($"/genre/{Uri.EscapeDataString(book.Genre)}")">
+                            @book.Genre
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Unknown Genre</span>
+                    }
                 </div>
 
                 <h1 class="display-5 fw-bold mb-2">@book.Title</h1>
@@ -112,7 +121,7 @@
     {
         if (book != null)
         {
-            OrderState.AddItem(new OrderItem { Book = book, Quantity = quantity });
+            CartService.AddToCart(book, quantity);
             message = $"{quantity}x \"{book.Title}\" added to cart!";
         }
     }

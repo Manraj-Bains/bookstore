@@ -1,5 +1,6 @@
 @inject CartService CartService
 @inject NavigationManager NavigationManager
+@implements IDisposable
 @rendermode InteractiveServer
 
 <button class="btn btn-outline-light position-relative" data-bs-toggle="offcanvas" data-bs-target="#cart">
@@ -7,7 +8,7 @@
     @if (CartService.Items.Any())
     {
         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-            @CartService.Items.Count
+            @CartService.GetItemCount()
         </span>
     }
 </button> 
@@ -31,6 +32,10 @@
             }
 
             <div class="d-grid gap-2 mt-3">
+                <div class="d-flex justify-content-between text-muted small mb-2 px-1">
+                    <span>Total</span>
+                    <span class="fw-semibold">@CartService.GetCartTotal().ToString("C")</span>
+                </div>
                 <button class="btn btn-warning d-block" @onclick="GoToCheckout" data-bs-dismiss="offcanvas">
                     Proceed to Checkout
                 </button>
@@ -44,8 +49,23 @@
 </div>
 
 @code {
+    protected override void OnInitialized()
+    {
+        CartService.OnChange += HandleCartChanged;
+    }
+
+    private void HandleCartChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
     private void GoToCheckout()
     {
-        NavigationManager.NavigateTo("/checkout");
+        NavigationManager.NavigateTo("/cart");
+    }
+
+    public void Dispose()
+    {
+        CartService.OnChange -= HandleCartChanged;
     }
 }

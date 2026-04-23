@@ -1,7 +1,6 @@
 @page "/checkout"
 @using Microsoft.EntityFrameworkCore
 @implements IAsyncDisposable
-@inject OrderState OrderState
 @inject NavigationManager NavigationManager
 @inject IDbContextFactory<BookstoreDb> DbFactory
 @inject CartService CartService
@@ -11,7 +10,7 @@
 
 <h1>Bookstore - Checkout</h1>
 
-@if (OrderState.Order.OrderItems.Count == 0)
+@if (CartService.Items.Count == 0)
 {
     <div class="alert alert-info">
         <p class="mb-0">Your cart is empty. Add some books to your cart first!</p>
@@ -21,13 +20,14 @@
 else
 {
     <dl>
-        @foreach (var item in OrderState.Order.OrderItems)
+        @foreach (var item in CartService.Items)
         {
-            <dt>@item.Book?.Title</dt>
-            <dd>@item.Quantity x @item.TotalPrice.ToString("C")</dd>
+            var lineTotal = item.Book.Price * item.Quantity;
+            <dt>@item.Book.Title</dt>
+            <dd>@item.Quantity x @lineTotal.ToString("C")</dd>
         }
     </dl>
-    <p class="fw-bold">Total: @OrderState.Order.GetTotal().ToString("C")</p>
+    <p class="fw-bold">Total: @CartService.GetCartTotal().ToString("C")</p>
     
     @if (!string.IsNullOrEmpty(errorMessage))
     {
@@ -48,25 +48,9 @@ else
     private bool isProcessing;
     private string? errorMessage;
 
-    private Order Order => OrderState.Order;
-
     protected override async Task OnInitializedAsync()
     {
         context = await DbFactory.CreateDbContextAsync();
-        
-        // Ensure Book navigation properties are loaded
-        var bookIds = Order.OrderItems.Select(i => i.BookId).ToList();
-        if (bookIds.Any())
-        {
-            var books = await context.Books
-                .Where(b => bookIds.Contains(b.Id))
-                .ToListAsync();
-            
-            foreach (var item in Order.OrderItems)
-            {
-                item.Book = books.First(b => b.Id == item.BookId);
-            }
-        }
     }
 
     private async Task PlaceOrder()
@@ -78,19 +62,21 @@ else
         
         try
         {
-            foreach (var item in Order.OrderItems)
+            var order = new Order
             {
-                // Detach the loaded Book entity to avoid tracking conflicts
-                context.Entry(item.Book).State = EntityState.Detached;
-                context.OrderItems.Add(item);
-            }
-            Order.OrderDate = DateTime.Now;
-            
-            context.Orders.Add(Order);
+                OrderDate = DateTime.Now,
+                OrderItems = CartService.Items.Select(i => new OrderItem
+                {
+                    BookId = i.Book.Id,
+                    Quantity = i.Quantity,
+                    TotalPrice = i.Book.Price * i.Quantity
+                }).ToList()
+            };
+
+            context.Orders.Add(order);
             await context.SaveChangesAsync();
             
             CartService.ClearCart();
-            OrderState.ResetOrder();
             NavigationManager.NavigateTo("/orders");
         }
         catch (Exception ex)

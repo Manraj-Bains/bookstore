@@ -36,3 +36,70 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+:root {
+    --bs-primary: #355c7d;
+    --bs-primary-rgb: 53, 92, 125;
+    --bs-success: #2f855a;
+    --bs-success-rgb: 47, 133, 90;
+    --bs-warning: #d69e2e;
+    --bs-warning-rgb: 214, 158, 46;
+}
+
+body {
+    background-color: #f6f8fb;
+    color: #1f2937;
+}
+
+.navbar {
+    background: linear-gradient(90deg, #1f3b57 0%, #355c7d 100%) !important;
+    box-shadow: 0 6px 20px rgba(31, 59, 87, 0.2);
+}
+
+.btn {
+    border-radius: 0.6rem;
+}
+
+.btn-primary,
+.btn-success,
+.btn-warning {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.card {
+    border-radius: 0.85rem;
+}
+
+.book-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.book-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 24px rgba(30, 41, 59, 0.22) !important;
+}
+
+.book-card .card-title {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.book-card .card-subtitle {
+    color: #dbe4f0;
+    font-size: 0.88rem;
+}
+
+.cart-page h1,
+h1.display-5 {
+    color: #243b53;
+    letter-spacing: 0.01em;
+}
+
+.cart-summary-card {
+    border: 1px solid #e2e8f0;
+}
+
+.cart-line-row:hover {
+    background-color: #f8fafc;
+}

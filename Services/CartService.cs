@@ -12,9 +12,14 @@ public class CartService
 {
     public decimal WalletBalance { get; private set; } = 100.00m;
     public List<CartItem> Items { get; } = [];
+    public event Action? OnChange;
+
+    private void NotifyStateChanged() => OnChange?.Invoke();
 
     public void AddToCart(Book book, int quantity)
     {
+        if (quantity <= 0) return;
+
         var existingItem = Items.FirstOrDefault(i => i.Book.Id == book.Id);
         if (existingItem != null)
         {
@@ -24,11 +29,14 @@ public class CartService
         {
             Items.Add(new CartItem { Book = book, Quantity = quantity });
         }
+
+        NotifyStateChanged();
     }
 
     public void RemoveFromCart(int bookId)
     {
         Items.RemoveAll(i => i.Book.Id == bookId);
+        NotifyStateChanged();
     }
 
     public void UpdateQuantity(int bookId, int quantity)
@@ -43,6 +51,7 @@ public class CartService
             else
             {
                 item.Quantity = quantity;
+                NotifyStateChanged();
             }
         }
     }
@@ -50,6 +59,7 @@ public class CartService
     public void ClearCart()
     {
         Items.Clear();
+        NotifyStateChanged();
     }
 
     public void Checkout()
@@ -61,6 +71,7 @@ public class CartService
         }
         WalletBalance -= total;
         ClearCart();
+        NotifyStateChanged();
     }
 
     public void AddFunds(decimal amount)
@@ -68,11 +79,17 @@ public class CartService
         if (amount > 0)
         {
             WalletBalance += amount;
+            NotifyStateChanged();
         }
     }
 
     public decimal GetCartTotal()
     {
         return Items.Sum(i => i.Book.Price * i.Quantity);
+    }
+
+    public int GetItemCount()
+    {
+        return Items.Sum(i => i.Quantity);
     }
 }
