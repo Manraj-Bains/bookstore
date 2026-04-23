@@ -1,8 +1,6 @@
 services:
   - type: web
     name: bookstore
-    env: dotnet
+    dockerfilePath: Dockerfile
     region: oregon
-    buildCommand: dotnet publish -c Release -o publish
-    startCommand: dotnet publish/bookstore.dll
     plan: free
