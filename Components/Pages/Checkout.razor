@@ -86,8 +86,6 @@ else
             }
             Order.OrderDate = DateTime.Now;
             
-            // Set the Order reference for each OrderItem before adding
-            var orderId = 0;
             context.Orders.Add(Order);
             await context.SaveChangesAsync();
             
