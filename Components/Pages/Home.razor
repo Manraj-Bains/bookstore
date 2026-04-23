@@ -86,26 +86,30 @@
 
 @code {
     private BookstoreDb? context;
-    private IEnumerable<Book>? allBooks;
-    private IEnumerable<string>? genres;
+    private List<Book> allBooks = [];
+    private List<string> genres = [];
     private Dictionary<string, bool> selectedGenres = new();
     private string sortOption = "";
-    private IEnumerable<Book> filteredBooks = Enumerable.Empty<Book>();
+    private List<Book> filteredBooks = [];
 
-    private IEnumerable<Book>? books => context?.Books.AsNoTracking().ToList();
+    private List<Book>? books => context?.Books.AsNoTracking().ToList();
 
     protected override async Task OnInitializedAsync()
     {
         context = DbFactory.CreateDbContext();
-        allBooks = books?.ToList() ?? [];
         
-        genres = allBooks?
+        // Load books once and store in local list
+        var loadedBooks = await context.Books.AsNoTracking().ToListAsync();
+        allBooks = loadedBooks;
+        
+        // Extract unique genres
+        genres = loadedBooks
             .Select(b => b.Genre)
             .Where(g => !string.IsNullOrEmpty(g))
             .Select(g => g!)
             .Distinct()
             .OrderBy(g => g)
-            .ToList() ?? [];
+            .ToList();
         
         foreach (var genre in genres)
         {
@@ -117,7 +121,7 @@
 
     private void ApplyFilterAndSort()
     {
-        var result = allBooks?.ToList() ?? [];
+        var result = allBooks.ToList();
         
         var selectedGenreList = selectedGenres
             .Where(kvp => kvp.Value)

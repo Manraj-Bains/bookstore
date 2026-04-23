@@ -11,44 +11,102 @@
 
 <h1>Bookstore - Checkout</h1>
 
-@if (Order.OrderItems.Any())
+@if (OrderState.Order.OrderItems.Count == 0)
+{
+    <div class="alert alert-info">
+        <p class="mb-0">Your cart is empty. Add some books to your cart first!</p>
+        <a href="/" class="btn btn-primary mt-3">Browse Books</a>
+    </div>
+}
+else
 {
     <dl>
-        @foreach (var item in Order.OrderItems)
+        @foreach (var item in OrderState.Order.OrderItems)
         {
-            <dt>@item.Book.Title</dt>
-            <dd>@item.Quantity x @item.Book.Price.ToString("C")</dd>
+            <dt>@item.Book?.Title</dt>
+            <dd>@item.Quantity x @item.TotalPrice.ToString("C")</dd>
         }
     </dl>
-    <p>Total: @Order.GetTotal().ToString("C")</p>
-    <button @onclick="PlaceOrder">Place Order</button>
+    <p class="fw-bold">Total: @OrderState.Order.GetTotal().ToString("C")</p>
+    
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+    
+    <button @onclick="PlaceOrder" class="btn btn-success" disabled="@isProcessing">
+        @if (isProcessing)
+        {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+        }
+        Place Order
+    </button>
 }
 
 @code {
-
-    private BookstoreDb? context { get; set; }
+    private BookstoreDb? context;
+    private bool isProcessing;
+    private string? errorMessage;
 
     private Order Order => OrderState.Order;
 
     protected override async Task OnInitializedAsync()
     {
         context = await DbFactory.CreateDbContextAsync();
+        
+        // Ensure Book navigation properties are loaded
+        var bookIds = Order.OrderItems.Select(i => i.BookId).ToList();
+        if (bookIds.Any())
+        {
+            var books = await context.Books
+                .Where(b => bookIds.Contains(b.Id))
+                .ToListAsync();
+            
+            foreach (var item in Order.OrderItems)
+            {
+                item.Book = books.First(b => b.Id == item.BookId);
+            }
+        }
     }
 
     private async Task PlaceOrder()
     {
-        if (context is null) return;
-        foreach (var item in Order.OrderItems)
+        if (context is null || isProcessing) return;
+        
+        isProcessing = true;
+        errorMessage = null;
+        
+        try
         {
-            context.Entry(item.Book).State = EntityState.Unchanged;
-            context.OrderItems.Add(item);
+            foreach (var item in Order.OrderItems)
+            {
+                // Detach the loaded Book entity to avoid tracking conflicts
+                context.Entry(item.Book).State = EntityState.Detached;
+                context.OrderItems.Add(item);
+            }
+            Order.OrderDate = DateTime.Now;
+            
+            // Set the Order reference for each OrderItem before adding
+            var orderId = 0;
+            context.Orders.Add(Order);
+            await context.SaveChangesAsync();
+            
+            CartService.ClearCart();
+            OrderState.ResetOrder();
+            NavigationManager.NavigateTo("/orders");
         }
-        Order.OrderDate = DateTime.Now;
-        context.Orders.Add(Order);
-        await context.SaveChangesAsync();
-        CartService.ClearCart();
-        NavigationManager.NavigateTo("/");
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to place order: {ex.Message}";
+            isProcessing = false;
+        }
     }
 
-    public async ValueTask DisposeAsync() { if (context is not null) await context.DisposeAsync(); }
+    public async ValueTask DisposeAsync() 
+    { 
+        if (context is not null) 
+        {
+            await context.DisposeAsync(); 
+        }
+    }
 }

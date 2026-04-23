@@ -15,7 +15,7 @@ builder.Services.AddSingleton<CartService>();
 builder.Services.AddScoped<OrderState>(); 
 
 // setup Database Context
-var connectionString = builder.Configuration.GetConnectionString("BOOKIESTORE_DB");
+var connectionString = builder.Configuration.GetConnectionString("BOOKSTORE_DB");
 if (!string.IsNullOrWhiteSpace(connectionString))
 {
     builder.Services.AddDbContextFactory<BookstoreDb>(options => options.UseSqlServer(connectionString, sqlServerOptions => sqlServerOptions.EnableRetryOnFailure(
@@ -48,7 +48,10 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+
+// HTTPS redirection for Azure App Service
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();

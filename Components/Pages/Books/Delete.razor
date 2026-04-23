@@ -6,20 +6,27 @@
 @inject IDbContextFactory<BookstoreDb> DbFactory
 @inject NavigationManager Navigation
 
-<PageTitle>Delete @book.Title - Bookstore</PageTitle>
+<PageTitle>Delete Book - Bookstore</PageTitle>
 
 <div class="container py-4">
     <nav aria-label="breadcrumb" class="mb-3">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="/">Books</a></li>
-            <li class="breadcrumb-item"><a href="/books/@Id">@book.Title</a></li>
+            <li class="breadcrumb-item"><a href="/books/@Id">@(book?.Title ?? "Loading...")</a></li>
             <li class="breadcrumb-item active">Delete</li>
         </ol>
     </nav>
 
     @if (isLoading)
     {
-        <p>Loading...</p>
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3 text-muted">Loading...</p>
+        </div>
+    }
+    else if (book is null)
+    {
+        <div class="alert alert-danger">Book not found.</div>
     }
     else
     {
@@ -82,25 +89,23 @@
     [Parameter]
     public int Id { get; set; }
 
-    private Book book = new() { Title = "", Author = "" };
+    private Book? book;
     private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
         using var context = await DbFactory.CreateDbContextAsync();
-        var existingBook = await context.Books.FindAsync(Id);
-        if (existingBook != null)
-        {
-            book = existingBook;
-        }
+        book = await context.Books.FindAsync(Id);
         isLoading = false;
     }
 
     private async Task HandleDelete()
     {
+        if (book is null) return;
+        
         using var context = await DbFactory.CreateDbContextAsync();
         context.Books.Remove(book);
         await context.SaveChangesAsync();
-        Navigation.NavigateTo("/books");
+        Navigation.NavigateTo("/");
     }
 }
