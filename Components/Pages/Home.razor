@@ -1,0 +1,141 @@
+@page "/"
+@inject IDbContextFactory<BookstoreDb> DbFactory
+@rendermode InteractiveServer
+
+<PageTitle>BookieStore - Home</PageTitle>
+
+<div class="container py-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Actions</h5>
+                </div>
+                <div class="card-body">
+                    <a href="/books/create" class="btn btn-primary w-100 mb-4">
+                        <i class="bi bi-plus-lg me-2"></i>New Book
+                    </a>
+                    
+                    <h6 class="mb-3"><i class="bi bi-funnel me-2"></i>Filter by Genre</h6>
+                    @if (genres?.Any() == true)
+                    {
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var genre in genres)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="genre-@genre"
+                                           @bind="selectedGenres[genre]"
+                                           @bind:after="ApplyFilterAndSort" />
+                                    <label class="form-check-label" for="genre-@genre">
+                                        @genre
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted small">No genres available</p>
+                    }
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0"><i class="bi bi-sort-down me-2"></i>Sort</h5>
+                </div>
+                <div class="card-body">
+                    <select class="form-select" @bind="sortOption" @bind:after="ApplyFilterAndSort">
+                        <option value="">Sort by</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-9">
+            @if (books is null)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-3 text-muted">Loading books...</p>
+                </div>
+            }
+            else if (filteredBooks.Count() == 0)
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>No books found. Try adjusting your filters.
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var book in filteredBooks)
+                    {
+                        <div class="col-md-6 col-xl-4">
+                            <BookCard Book="book" />
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private BookstoreDb? context;
+    private IEnumerable<Book>? allBooks;
+    private IEnumerable<string>? genres;
+    private Dictionary<string, bool> selectedGenres = new();
+    private string sortOption = "";
+    private IEnumerable<Book> filteredBooks = Enumerable.Empty<Book>();
+
+    private IEnumerable<Book>? books => context?.Books.AsNoTracking().ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        context = DbFactory.CreateDbContext();
+        allBooks = books?.ToList() ?? [];
+        
+        genres = allBooks?
+            .Select(b => b.Genre)
+            .Where(g => !string.IsNullOrEmpty(g))
+            .Select(g => g!)
+            .Distinct()
+            .OrderBy(g => g)
+            .ToList() ?? [];
+        
+        foreach (var genre in genres)
+        {
+            selectedGenres[genre] = false;
+        }
+        
+        ApplyFilterAndSort();
+    }
+
+    private void ApplyFilterAndSort()
+    {
+        var result = allBooks?.ToList() ?? [];
+        
+        var selectedGenreList = selectedGenres
+            .Where(kvp => kvp.Value)
+            .Select(kvp => kvp.Key)
+            .ToList();
+        
+        if (selectedGenreList.Count > 0)
+        {
+            result = result.Where(b => !string.IsNullOrEmpty(b.Genre) && selectedGenreList.Contains(b.Genre)).ToList();
+        }
+        
+        result = sortOption switch
+        {
+            "price-asc" => result.OrderBy(b => b.Price).ToList(),
+            "price-desc" => result.OrderByDescending(b => b.Price).ToList(),
+            _ => result
+        };
+        
+        filteredBooks = result;
+    }
+}

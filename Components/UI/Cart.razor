@@ -1,0 +1,51 @@
+@inject CartService CartService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<button class="btn btn-outline-light position-relative" data-bs-toggle="offcanvas" data-bs-target="#cart">
+    <i class="bi bi-cart"></i>
+    @if (CartService.Items.Any())
+    {
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            @CartService.Items.Count
+        </span>
+    }
+</button> 
+
+<div class="offcanvas offcanvas-end" id="cart" tabindex="-1">
+     <div class="offcanvas-header">
+         <h5>Your Order</h5> 
+         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        @if (CartService.Items.Any())
+        {
+            @foreach (var item in CartService.Items)
+            {
+                <CartItem 
+                    item="item"
+                    OnRemove="() => CartService.RemoveFromCart(item.Book.Id)"
+                    OnDecrement="() => { if (item.Quantity > 1) CartService.UpdateQuantity(item.Book.Id, item.Quantity - 1); }"
+                    OnIncrement="() => CartService.AddToCart(item.Book, 1)"
+                />
+            }
+
+            <div class="d-grid gap-2 mt-3">
+                <button class="btn btn-warning d-block" @onclick="GoToCheckout" data-bs-dismiss="offcanvas">
+                    Proceed to Checkout
+                </button>
+            </div>
+        }
+        else
+        {
+            <p class="text-center text-muted py-5">There are no items in your cart.</p>
+        }
+    </div>
+</div>
+
+@code {
+    private void GoToCheckout()
+    {
+        NavigationManager.NavigateTo("/checkout");
+    }
+}

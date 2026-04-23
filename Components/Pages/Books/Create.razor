@@ -1,0 +1,92 @@
+@page "/books/create"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Bookstore.Data
+@using Bookstore.Models
+@inject IDbContextFactory<BookstoreDb> DbFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Add New Book - Bookstore</PageTitle>
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Books</a></li>
+            <li class="breadcrumb-item active">Add New Book</li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-4">Add New Book</h1>
+
+    <EditForm Model="@book" OnValidSubmit="HandleValidSubmit" FormName="CreateBook">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="row g-3">
+            <div class="col-12">
+                <label for="title" class="form-label">Title *</label>
+                <InputText id="title" @bind-Value="book.Title" class="form-control" />
+                <ValidationMessage For="@(() => book.Title)" />
+            </div>
+
+            <div class="col-12">
+                <label for="coverImageUrl" class="form-label">Cover Image URL</label>
+                <InputText id="coverImageUrl" @bind-Value="book.CoverImageUrl" class="form-control" />
+            </div>
+
+            <div class="col-md-6">
+                <label for="author" class="form-label">Author *</label>
+                <InputText id="author" @bind-Value="book.Author" class="form-control" />
+                <ValidationMessage For="@(() => book.Author)" />
+            </div>
+
+            <div class="col-md-6">
+                <label for="genre" class="form-label">Genre</label>
+                <InputText id="genre" @bind-Value="book.Genre" class="form-control" />
+            </div>
+
+            <div class="col-md-6">
+                <label for="publisher" class="form-label">Publisher</label>
+                <InputText id="publisher" @bind-Value="book.Publisher" class="form-control" />
+            </div>
+
+            <div class="col-md-6">
+                <label for="publicationYear" class="form-label">Publication Year</label>
+                <InputNumber id="publicationYear" @bind-Value="book.PublicationYear" class="form-control" />
+            </div>
+
+            <div class="col-md-6">
+                <label for="language" class="form-label">Language</label>
+                <InputText id="language" @bind-Value="book.Language" class="form-control" />
+            </div>
+
+            <div class="col-md-3">
+                <label for="pageCount" class="form-label">Page Count</label>
+                <InputNumber id="pageCount" @bind-Value="book.PageCount" class="form-control" />
+            </div>
+
+            <div class="col-md-3">
+                <label for="price" class="form-label">Price *</label>
+                <InputNumber id="price" @bind-Value="book.Price" class="form-control" />
+                <ValidationMessage For="@(() => book.Price)" />
+            </div>
+
+            <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-success me-2">Create Book</button>
+                <a href="/" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private Book book = new() { Title = "", Author = "", PublicationYear = DateTime.Now.Year };
+
+    private async Task HandleValidSubmit()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        context.Books.Add(book);
+        await context.SaveChangesAsync();
+        Navigation.NavigateTo("/books");
+    }
+}

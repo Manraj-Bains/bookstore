@@ -1,0 +1,32 @@
+@using Bookstore.Services
+
+<div class="card mb-3 border-0 shadow-sm">
+  <div class="card-header bg-transparent d-flex justify-content-between align-items-start gap-2">
+    <h6 class="card-title">@item.Book.Title</h6>
+    <i role="button" class="bi bi-x-lg" @onclick="OnRemove"></i>
+  </div>
+  <div class="card-body">
+    <div class="d-flex gap-3 justify-content-between align-items-end">
+      <span>Quantity:</span>
+      <div class="border rounded d-flex">
+        <span class="text-center d-block px-3 py-2 align-middle"
+          role="button" @onclick="OnDecrement"><i class="bi bi-dash"></i></span>
+        <span class="text-center d-block px-3 py-2 align-middle" role="input">
+          @item.Quantity
+        </span>
+        <span class="text-center d-block px-3 py-2 align-middle"
+          role="button" @onclick="OnIncrement"><i class="bi bi-plus"></i></span>
+      </div>
+    </div>
+  </div>
+  <div class="cart-footer text-end bg-transparent border-0 py-0">
+    <span class="text-muted">$@((item.Book.Price * item.Quantity).ToString("F2"))</span>
+  </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Bookstore.Services.CartItem item { get; set; } = null!;
+    [Parameter] public EventCallback OnRemove { get; set; }
+    [Parameter] public EventCallback OnDecrement { get; set; }
+    [Parameter] public EventCallback OnIncrement { get; set; }
+}

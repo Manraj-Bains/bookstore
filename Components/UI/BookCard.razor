@@ -1,0 +1,19 @@
+@using Bookstore.Models
+
+<div class="card overflow-hidden text-white" style="width: 14rem; height: 20rem;">
+    <img src="@Book.CoverImageUrl" alt="@Book.Title" class="card-img-top" />
+    <a href="/books/@Book.Id" class="stretched-link"></a>
+    <div class="card-img-overlay d-flex flex-column p-0">
+        <div class="px-3 py-2 grow-1 bg-dark bg-opacity-50">
+            <h5 class="card-title">@Book.Title</h5>
+            <h6 class="card-subtitle">@Book.Author</h6>
+        </div>
+        <div class="card-footer mt-auto text-center bg-dark bg-opacity-50">
+            <span class="fw-bold text-white fs-4">$@Book.Price.ToString("F2")</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Book Book { get; set; } = null!;
+}

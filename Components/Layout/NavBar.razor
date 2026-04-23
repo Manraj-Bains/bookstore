@@ -1,0 +1,29 @@
+@inject CartService cartService
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="/">
+      <i class="bi bi-book-half me-2"></i>Bookstore
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link active" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/orders">Orders</a>
+        </li>
+      </ul>
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-light">
+          <i class="bi bi-wallet2 me-1"></i>
+          <span class="fw-bold">$@cartService.WalletBalance.ToString("F2")</span>
+        </span>
+        <Cart />
+      </div>
+    </div>
+  </div>
+</nav>

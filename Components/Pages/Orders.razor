@@ -1,0 +1,75 @@
+@page "/orders"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Bookstore.Data
+@using Bookstore.Models
+@inject IDbContextFactory<BookstoreDb> DbFactory
+
+<PageTitle>Order History</PageTitle>
+
+<h1>Order History</h1>
+
+@if (orders is null)
+{
+    <p>Loading...</p>
+}
+else if (orders.Count == 0)
+{
+    <div class="alert alert-info">
+        <p class="mb-0">No orders yet. Start shopping to see your order history here!</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Items</th>
+                    <th class="text-end">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in orders)
+                {
+                    <tr>
+                        <td>#@order.Id</td>
+                        <td>@order.OrderDate.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            <ul class="list-unstyled mb-0">
+                                @foreach (var item in order.OrderItems)
+                                {
+                                    <li>
+                                        <strong>@item.Book?.Title</strong> -
+                                        Qty: @item.Quantity x @item.TotalPrice.ToString("C")
+                                    </li>
+                                }
+                            </ul>
+                        </td>
+                        <td class="text-end fw-bold">@order.GetTotal().ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<div class="mt-4">
+    <a href="/" class="btn btn-primary">Continue Shopping</a>
+</div>
+
+@code {
+    private List<Order>? orders;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        orders = await db.Orders
+            .Include(o => o.OrderItems)
+            .ThenInclude(i => i.Book)
+            .OrderByDescending(o => o.OrderDate)
+            .ToListAsync();
+    }
+}

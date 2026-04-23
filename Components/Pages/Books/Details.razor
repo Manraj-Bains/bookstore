@@ -1,0 +1,119 @@
+@page "/books/{id:int}"
+@rendermode InteractiveServer
+@inject IDbContextFactory<BookstoreDb> DbFactory
+@inject CartService cartService
+@inject OrderState OrderState
+
+<PageTitle>@(book?.Title ?? "Book Details") - Bookstore</PageTitle>
+
+<div class="container py-5">
+    @if (book is null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3 text-muted">Loading...</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-5">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+                    @if (!string.IsNullOrEmpty(book.CoverImageUrl))
+                    {
+                        <img src="@book.CoverImageUrl" alt="@book.Title" class="img-fluid w-100" style="object-fit: cover; max-height: 500px;">
+                    }
+                    else
+                    {
+                        <div class="d-flex align-items-center justify-content-center bg-light" style="min-height: 400px;">
+                            <i class="bi bi-book text-muted" style="font-size: 5rem;"></i>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="mb-3">
+                    <span class="badge bg-secondary">@book.Genre</span>
+                </div>
+
+                <h1 class="display-5 fw-bold mb-2">@book.Title</h1>
+                <h4 class="text-muted mb-4">by @book.Author</h4>
+
+                <div class="card border-0 bg-light rounded-3 p-4 mb-4">
+                    <div class="row g-4 text-center">
+                        <div class="col-4 border-end">
+                            <div class="text-muted small text-uppercase">Publisher</div>
+                            <div class="fw-semibold">@(string.IsNullOrEmpty(book.Publisher) ? "-" : book.Publisher)</div>
+                        </div>
+                        <div class="col-4 border-end">
+                            <div class="text-muted small text-uppercase">Year</div>
+                            <div class="fw-semibold">@book.PublicationYear</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-muted small text-uppercase">Pages</div>
+                            <div class="fw-semibold">@book.PageCount</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="row g-3">
+                        <div class="col-auto">
+                            <span class="text-muted">Language:</span> @(string.IsNullOrEmpty(book.Language) ? "-" : book.Language)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="display-6 text-primary fw-bold mb-4">@book.Price.ToString("C")</div>
+
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="input-group" style="max-width: 180px;">
+                        <span class="input-group-text">Qty</span>
+                        <input type="number" class="form-control" @bind="quantity" min="1" />
+                    </div>
+                    <button class="btn btn-success btn-lg px-5" @onclick="PurchaseBook">
+                        <i class="bi bi-cart-plus me-2"></i>Purchase
+                    </button>
+                </div>
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <div class="alert alert-success py-2 px-3 d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-check-circle-fill"></i>@message
+                    </div>
+                }
+
+                <div class="mt-4 pt-4 border-top">
+                    <a href="/" class="text-decoration-none">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Book? book;
+    private int quantity = 1;
+    private string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        book = await context.Books.FindAsync(Id);
+    }
+
+    private void PurchaseBook()
+    {
+        if (book != null)
+        {
+            OrderState.AddItem(new OrderItem { Book = book, Quantity = quantity });
+            message = $"{quantity}x \"{book.Title}\" added to cart!";
+        }
+    }
+}

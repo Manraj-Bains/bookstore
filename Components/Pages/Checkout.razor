@@ -1,0 +1,54 @@
+@page "/checkout"
+@using Microsoft.EntityFrameworkCore
+@implements IAsyncDisposable
+@inject OrderState OrderState
+@inject NavigationManager NavigationManager
+@inject IDbContextFactory<BookstoreDb> DbFactory
+@inject CartService CartService
+@rendermode InteractiveServer
+
+<PageTitle>Bookstore - Checkout</PageTitle>
+
+<h1>Bookstore - Checkout</h1>
+
+@if (Order.OrderItems.Any())
+{
+    <dl>
+        @foreach (var item in Order.OrderItems)
+        {
+            <dt>@item.Book.Title</dt>
+            <dd>@item.Quantity x @item.Book.Price.ToString("C")</dd>
+        }
+    </dl>
+    <p>Total: @Order.GetTotal().ToString("C")</p>
+    <button @onclick="PlaceOrder">Place Order</button>
+}
+
+@code {
+
+    private BookstoreDb? context { get; set; }
+
+    private Order Order => OrderState.Order;
+
+    protected override async Task OnInitializedAsync()
+    {
+        context = await DbFactory.CreateDbContextAsync();
+    }
+
+    private async Task PlaceOrder()
+    {
+        if (context is null) return;
+        foreach (var item in Order.OrderItems)
+        {
+            context.Entry(item.Book).State = EntityState.Unchanged;
+            context.OrderItems.Add(item);
+        }
+        Order.OrderDate = DateTime.Now;
+        context.Orders.Add(Order);
+        await context.SaveChangesAsync();
+        CartService.ClearCart();
+        NavigationManager.NavigateTo("/");
+    }
+
+    public async ValueTask DisposeAsync() { if (context is not null) await context.DisposeAsync(); }
+}

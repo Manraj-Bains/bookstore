@@ -1,0 +1,106 @@
+@page "/books/delete/{id:int}"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Bookstore.Data
+@using Bookstore.Models
+@inject IDbContextFactory<BookstoreDb> DbFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Delete @book.Title - Bookstore</PageTitle>
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Books</a></li>
+            <li class="breadcrumb-item"><a href="/books/@Id">@book.Title</a></li>
+            <li class="breadcrumb-item active">Delete</li>
+        </ol>
+    </nav>
+
+    @if (isLoading)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <div class="card border-danger mb-4">
+            <div class="card-header bg-danger text-white">
+                <h3 class="mb-0">Delete Book</h3>
+            </div>
+            <div class="card-body">
+                <h4 class="card-title">Are you sure you want to delete "@book.Title"?</h4>
+                
+                <div class="row mt-3">
+                    <div class="col-md-4 mb-3">
+                        @if (!string.IsNullOrEmpty(book.CoverImageUrl))
+                        {
+                            <img src="@book.CoverImageUrl" class="img-fluid rounded" alt="@book.Title">
+                        }
+                        else
+                        {
+                            <div class="d-flex align-items-center justify-content-center bg-light rounded" style="height: 150px;">
+                                <span class="text-muted">No Cover</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="col-md-8">
+                        <table class="table table-borderless">
+                            <tbody>
+                                <tr>
+                                    <th scope="row" class="w-25">Author</th>
+                                    <td>@book.Author</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Genre</th>
+                                    <td>@(string.IsNullOrEmpty(book.Genre) ? "-" : book.Genre)</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Publisher</th>
+                                    <td>@(string.IsNullOrEmpty(book.Publisher) ? "-" : book.Publisher)</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Price</th>
+                                    <td>@book.Price.ToString("C")</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <p class="text-danger mt-3">This action cannot be undone.</p>
+
+                <form method="post" @onsubmit="HandleDelete">
+                    <button type="submit" class="btn btn-danger me-2">Delete Book</button>
+                    <a href="/books/@Id" class="btn btn-outline-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Book book = new() { Title = "", Author = "" };
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        var existingBook = await context.Books.FindAsync(Id);
+        if (existingBook != null)
+        {
+            book = existingBook;
+        }
+        isLoading = false;
+    }
+
+    private async Task HandleDelete()
+    {
+        using var context = await DbFactory.CreateDbContextAsync();
+        context.Books.Remove(book);
+        await context.SaveChangesAsync();
+        Navigation.NavigateTo("/books");
+    }
+}

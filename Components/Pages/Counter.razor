@@ -1,0 +1,12 @@
+<p> Counter value: @count</p>
+
+<button class="btn btn-primary" @onclick="Increment">Update count</button>
+
+@code {
+    [Parameter] public int count { get; set; } 
+
+    private void Increment()
+    {
+        count++;
+    }
+}
